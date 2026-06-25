@@ -1,0 +1,13 @@
+{
+  "title": "TokenAnalytics",
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "installation",
+    "quick-start",
+    "supported-agents",
+    "features",
+    "configuration",
+    "reference"
+  ]
+}

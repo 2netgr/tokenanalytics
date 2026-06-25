@@ -1,0 +1,36 @@
+{
+  "name": "tokenanalytics",
+  "version": "1.6.1",
+  "description": "Local token + cost monitoring dashboard for Claude, Codex, Gemini, and other coding agents.",
+  "main": "index.js",
+  "bin": {
+    "tokenanalytics": "./bin/cli.js",
+    "tokentelemetry": "./bin/cli.js"
+  },
+  "scripts": {
+    "start": "node bin/cli.js"
+  },
+  "keywords": [
+    "observability",
+    "ai",
+    "agents",
+    "claude",
+    "codex",
+    "gemini",
+    "monitoring"
+  ],
+  "author": "TokenAnalytics",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/2netgr/tokenanalytics.git"
+  },
+  "homepage": "https://tokenanalytics.app",
+  "bugs": {
+    "url": "https://github.com/2netgr/tokenanalytics/issues"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18"
+  }
+}

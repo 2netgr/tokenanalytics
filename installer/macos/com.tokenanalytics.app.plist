@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  LaunchAgent template for TokenAnalytics.
+
+  This is a TEMPLATE. The install.command script copies it to
+  ~/Library/LaunchAgents/com.tokenanalytics.app.plist and replaces the
+  __HOME__, __APP_DIR__ and __NODE_BIN__ placeholders with absolute paths.
+  Do not load this file directly while the placeholders are still present.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.tokenanalytics.app</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__NODE_BIN__</string>
+        <string>__APP_DIR__/bin/cli.js</string>
+    </array>
+
+    <!-- Run from the installed app directory so relative paths resolve. -->
+    <key>WorkingDirectory</key>
+    <string>__APP_DIR__</string>
+
+    <!-- Start automatically at login. -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Restart the process if it crashes, but do NOT fight a clean exit
+         or a deliberate `launchctl unload` during uninstall. -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>Crashed</key>
+        <true/>
+    </dict>
+
+    <!-- Avoid hammering on rapid restarts. -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>__HOME__</string>
+        <!-- Ensure Homebrew + system bins are on PATH for node/python lookups. -->
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>__HOME__/.tokenanalytics/logs/tokenanalytics.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.tokenanalytics/logs/tokenanalytics.err.log</string>
+</dict>
+</plist>

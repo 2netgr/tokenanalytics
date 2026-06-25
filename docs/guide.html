@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TokenAnalytics — Οδηγός</title>
+<style>
+  :root{
+    --bg:#0a0d13; --panel:#11161f; --panel2:#161c27; --border:#222b3a;
+    --fg:#e6edf6; --muted:#9fb0c3; --dim:#6b7c91;
+    --brand:#60a5fa; --brand-d:#3b82f6; --ok:#34d399; --warn:#fbbf24; --danger:#f87171;
+    --radius:14px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:radial-gradient(1200px 600px at 70% -10%,rgba(96,165,250,.10),transparent),var(--bg);
+    color:var(--fg);font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px 90px}
+  header.hero{padding:64px 0 34px;text-align:center}
+  .logo{display:inline-grid;place-items:center;width:54px;height:54px;border-radius:14px;
+    background:linear-gradient(145deg,var(--brand),var(--brand-d));box-shadow:0 10px 40px -10px rgba(96,165,250,.6);margin-bottom:18px}
+  .logo svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2.4}
+  h1{font-size:32px;margin:0 0 8px;letter-spacing:-.5px}
+  .sub{color:var(--muted);font-size:16px;margin:0}
+  .pill{display:inline-block;margin-top:14px;font-size:12px;color:var(--brand);
+    border:1px solid rgba(96,165,250,.35);background:rgba(96,165,250,.08);border-radius:999px;padding:5px 12px}
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:30px 0 8px}
+  nav.toc a{font-size:13px;color:var(--muted);text-decoration:none;border:1px solid var(--border);
+    background:var(--panel);border-radius:999px;padding:7px 13px;transition:.15s}
+  nav.toc a:hover{color:var(--fg);border-color:rgba(96,165,250,.5)}
+  section{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:26px 28px;margin:22px 0}
+  section h2{font-size:21px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+  section h2 .n{font-size:13px;color:#04060a;background:var(--brand);width:24px;height:24px;border-radius:8px;
+    display:grid;place-items:center;font-weight:700;flex:none}
+  section > p:first-of-type{color:var(--muted);margin-top:2px}
+  h3{font-size:15px;margin:22px 0 8px;color:var(--fg)}
+  ul,ol{padding-left:20px;margin:10px 0}
+  li{margin:6px 0}
+  code{font-family:var(--mono);font-size:.88em;background:var(--panel2);border:1px solid var(--border);
+    border-radius:6px;padding:1px 6px;color:#cfe3ff}
+  pre{background:#0c1119;border:1px solid var(--border);border-radius:10px;padding:14px 16px;overflow:auto;margin:12px 0}
+  pre code{background:none;border:none;padding:0;color:#cfe3ff;font-size:13px;line-height:1.7}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin:14px 0}
+  .card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .card b{color:var(--fg)}
+  .card small{color:var(--dim)}
+  .note{border-left:3px solid var(--brand);background:rgba(96,165,250,.07);border-radius:8px;padding:12px 15px;margin:14px 0;color:var(--muted)}
+  .warn{border-left:3px solid var(--warn);background:rgba(251,191,36,.07)}
+  .ok{border-left:3px solid var(--ok);background:rgba(52,211,153,.07)}
+  .note b{color:var(--fg)}
+  .steps{counter-reset:s;list-style:none;padding:0}
+  .steps>li{counter-increment:s;position:relative;padding:10px 0 10px 44px;border-bottom:1px solid var(--border)}
+  .steps>li:last-child{border-bottom:none}
+  .steps>li::before{content:counter(s);position:absolute;left:0;top:9px;width:28px;height:28px;border-radius:9px;
+    background:var(--panel2);border:1px solid var(--border);color:var(--brand);font-weight:700;display:grid;place-items:center;font-size:13px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border)}
+  th{color:var(--dim);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}
+  .diagram{font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:pre;line-height:1.5;
+    background:#0c1119;border:1px solid var(--border);border-radius:10px;padding:16px;overflow:auto}
+  .kbd{font-family:var(--mono);font-size:.85em;border:1px solid var(--border);border-bottom-width:2px;border-radius:6px;padding:1px 6px;background:var(--panel2)}
+  footer{text-align:center;color:var(--dim);font-size:13px;margin-top:34px}
+  a{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 5-7"/></svg></div>
+    <h1>TokenAnalytics</h1>
+    <p class="sub">Τοπική παρακολούθηση tokens &amp; κόστους για AI coding agents — με συγχρονισμό πολλών συσκευών.</p>
+    <span class="pill">100% local · χωρίς telemetry · open source</span>
+    <nav class="toc">
+      <a href="#how">Πώς λειτουργεί</a>
+      <a href="#install">Εγκατάσταση</a>
+      <a href="#sync">Συγχρονισμός devices</a>
+      <a href="#internet">Μέσω internet</a>
+      <a href="#update">Ενημερώσεις</a>
+      <a href="#data">Δεδομένα &amp; ασφάλεια</a>
+      <a href="#trouble">Προβλήματα</a>
+    </nav>
+  </header>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section id="how">
+    <h2><span class="n">1</span> Πώς λειτουργεί</h2>
+    <p>Το TokenAnalytics διαβάζει τα <b>τοπικά transcripts</b> των coding agents σου, υπολογίζει tokens &amp; κόστος, και τα δείχνει σε ένα dashboard. Δεν στέλνει τίποτα στο internet — όλα μένουν στο μηχάνημά σου.</p>
+
+    <div class="diagram">~/.claude  ~/.codex  ~/.cursor  ~/.gemini  …      (τα logs των agents σου)
+        │  scan κάθε ~30s
+        ▼
+   ┌──────────────┐      ┌─────────────────────────┐      ┌───────────────┐
+   │  Scanner     │ ───► │  Durable store          │ ───► │  Dashboard    │
+   │ (διαβάζει    │      │  ~/.tokenanalytics/      │      │ localhost:3000│
+   │  transcripts)│      │  history.db (μόνιμο)     │      │  (backend     │
+   └──────────────┘      └─────────────────────────┘      │   :8000)      │
+                          κρατάει ΟΛΟ το ιστορικό          └───────────────┘
+                          (δεν χάνεται στο 30ήμερο)</div>
+
+    <h3>Τι παρακολουθεί</h3>
+    <div class="grid">
+      <div class="card"><b>Agents</b><br><small>Claude Code, Codex, Gemini CLI, Cursor, GitHub Copilot, Qwen, Antigravity, OpenCode, Vibe, Grok</small></div>
+      <div class="card"><b>Μετρικές</b><br><small>input / output / cached / total tokens, κόστος (API-equiv), ανά agent &amp; ανά μοντέλο, με χρονικά φίλτρα</small></div>
+      <div class="card"><b>Μόνιμο ιστορικό</b><br><small>το <code>history.db</code> δεν διαγράφει ποτέ — κρατάει τα δεδομένα όλων των εποχών, ακόμη κι όταν ο agent σβήνει τα δικά του logs</small></div>
+      <div class="card"><b>Subagents</b><br><small>τα delegated tokens μετριούνται ξεχωριστά — toggle «Include subagents» για να μπουν στο σύνολο</small></div>
+    </div>
+
+    <div class="note ok"><b>Cursor:</b> τα transcripts του Cursor δεν εκθέτουν tokens — το TokenAnalytics τα <b>εκτιμά</b> από το κείμενο και τα τιμολογεί με τις τιμές του Composer (Composer&nbsp;2.5: $0.50 in / $2.50 out / $0.20 cache-read ανά εκατ.). Εμφανίζονται ως «estimated».</div>
+  </section>
+
+  <!-- ============ INSTALL ============ -->
+  <section id="install">
+    <h2><span class="n">2</span> Εγκατάσταση (macOS)</h2>
+    <p>Με το έτοιμο installer (<code>TokenAnalytics-macOS.zip</code>) — δεν χρειάζεσαι terminal.</p>
+
+    <h3>Προαπαιτούμενα</h3>
+    <p>Node.js 18+, npm, git, Python 3.9+. Αν λείπει κάτι, ο installer σου το λέει με link. Γρήγορη εγκατάσταση:</p>
+    <pre><code>xcode-select --install        # git + build tools
+# Node &amp; Python: από nodejs.org / python.org  ή  με Homebrew:
+brew install node python</code></pre>
+
+    <h3>Βήματα</h3>
+    <ol class="steps">
+      <li><b>Unzip</b> το <code>TokenAnalytics-macOS.zip</code>.</li>
+      <li><b>Δεξί κλικ</b> στο <code>install.command</code> → <span class="kbd">Open</span>. (Επειδή είναι unsigned, ο Gatekeeper θέλει right-click→Open την πρώτη φορά· αν μπλοκάρει: <i>System Settings → Privacy &amp; Security → Open Anyway</i>.)</li>
+      <li>Ο installer ελέγχει προαπαιτούμενα, κατεβάζει την <b>τελευταία έκδοση</b> στο <code>~/.tokenanalytics/app</code>, στήνει <b>LaunchAgent</b> (auto-start στο login) και ξεκινά την εφαρμογή.</li>
+      <li>Ανοίγει αυτόματα το dashboard στο <code>http://localhost:3000</code>. Έτοιμο.</li>
+    </ol>
+
+    <div class="note"><b>Αναβάθμιση από παλιά εγκατάσταση:</b> αν το μηχάνημα έχει παλιό <code>~/.tokentelemetry</code>, ο installer <b>μεταναστεύει αυτόματα</b> τα δεδομένα στο <code>~/.tokenanalytics</code> κρατώντας backup — δεν χάνεται τίποτα.</div>
+
+    <h3>Απεγκατάσταση</h3>
+    <p>Τρέξε το <code>uninstall.command</code> από το zip — αφαιρεί την εφαρμογή + τον LaunchAgent, αλλά <b>κρατάει τα δεδομένα σου</b> στο <code>~/.tokenanalytics</code>.</p>
+  </section>
+
+  <!-- ============ SYNC ============ -->
+  <section id="sync">
+    <h2><span class="n">3</span> Συγχρονισμός analytics από πολλά devices</h2>
+    <p>Ο συγχρονισμός είναι <b>αμφίδρομος</b>: κάθε συσκευή στέλνει τα δικά της δεδομένα <i>και</i> κατεβάζει των άλλων, ώστε <b>όλες οι συσκευές να δείχνουν τα πάντα</b>.</p>
+
+    <h3>Το μοντέλο (star)</h3>
+    <div class="diagram">           ┌─────────────────────┐
+           │   HUB  (device 1)   │   πάντα ανοιχτό, προσβάσιμο
+           │  βλέπει ΟΛΑ τα data │   στο δίκτυο, με token
+           └─────────────────────┘
+              ▲  push        ▲  push
+              │  pull ▼      │  pull ▼
+       ┌────────────┐   ┌────────────┐
+       │  device 2  │   │  device 3  │   peers: push τα δικά τους
+       │ βλέπει ΟΛΑ │   │ βλέπει ΟΛΑ │   + pull του hub → mirror
+       └────────────┘   └────────────┘</div>
+    <p>Διάλεξε <b>ένα device ως hub</b> (αυτό που είναι πάντα ανοιχτό). Όλα τα υπόλοιπα συνδέονται σε αυτό. Κάθε 60s γίνεται push + pull, και το <code>(device_id, agent, id)</code> εξασφαλίζει ότι δεν διπλασιάζεται ούτε χάνεται τίποτα.</p>
+
+    <h3>Α) Στήσε τον hub (device 1)</h3>
+    <p>Ο hub πρέπει να είναι <b>προσβάσιμος στο δίκτυο</b> με <b>token</b>. Ξεκίνα τον έτσι:</p>
+    <pre><code>node bin/cli.js --host 0.0.0.0 --auth-token &lt;ΤΟ-TOKEN-ΣΟΥ&gt; \
+    --allowed-origins &lt;LAN-IP-του-hub&gt;</code></pre>
+    <p>Το token &amp; το URL φαίνονται και στο dashboard του hub: <b>Settings → Multi-device sync</b> (ή «Connect a device»). Σε μόνιμη εγκατάσταση, ο LaunchAgent μπορεί να τα έχει ήδη ρυθμισμένα.</p>
+
+    <h3>Β) Σύνδεσε κάθε άλλο device</h3>
+    <ol class="steps">
+      <li>Εγκατέστησε κανονικά το TokenAnalytics στο device (Βήμα 2).</li>
+      <li>Στο dashboard του → <b>Settings → Multi-device sync → «Connect this device to your hub»</b>.</li>
+      <li>Βάλε <b>Hub URL</b> (π.χ. <code>http://192.168.1.20:8000</code>) και το <b>Access token</b>.</li>
+      <li>Πάτα <b>Connect &amp; sync</b>. Από εκεί συγχρονίζεται αυτόματα.</li>
+    </ol>
+    <p>Στον επιλογέα <b>«Device»</b> (Dashboard/Analytics) διαλέγεις: <b>Local device</b>, <b>All devices</b> (το συνολικό), ή μια συγκεκριμένη συσκευή.</p>
+
+    <div class="note ok"><b>Ιδιωτικότητα:</b> ανταλλάσσονται μόνο <b>summary rollups</b> (tokens/κόστος/μοντέλο) — <b>ποτέ</b> prompts, κώδικας ή transcripts. Όλα μένουν μέσα στις <b>δικές σου</b> συσκευές, με token. Κανένα cloud ενδιάμεσο.</div>
+  </section>
+
+  <!-- ============ INTERNET ============ -->
+  <section id="internet">
+    <h2><span class="n">4</span> Σύνδεση μέσω internet (διαφορετικά δίκτυα)</h2>
+    <p>Αν οι συσκευές δεν είναι στο ίδιο δίκτυο, ο ευκολότερος &amp; ασφαλέστερος τρόπος είναι το <b>Tailscale</b> (δωρεάν mesh VPN).</p>
+    <ol class="steps">
+      <li>Εγκατέστησε <a href="https://tailscale.com/download">Tailscale</a> και στις δύο συσκευές, login με τον <b>ίδιο λογαριασμό</b>.</li>
+      <li>Κάθε συσκευή παίρνει σταθερή ιδιωτική IP <code>100.x.x.x</code>, προσβάσιμη από <b>οπουδήποτε</b>, end-to-end encrypted, χωρίς port-forwarding.</li>
+      <li>Στο sync panel του peer, βάλε ως Hub URL την <b>Tailscale IP</b> του hub: <code>http://100.x.x.x:8000</code> + το token.</li>
+    </ol>
+    <div class="note">Δουλεύει ακριβώς όπως στο LAN — αλλάζει μόνο η διεύθυνση. Αποφεύγεις να εκθέσεις τον hub δημόσια στο internet.</div>
+  </section>
+
+  <!-- ============ UPDATE ============ -->
+  <section id="update">
+    <h2><span class="n">5</span> Ενημερώσεις</h2>
+    <p>Όταν υπάρχει νέα έκδοση, εμφανίζεται μπάρα <b>«Update available»</b> στην κορυφή:</p>
+    <ul>
+      <li><b>Update now</b> — κατεβάζει μόνο του τα νέα αρχεία (<code>git pull</code>), κάνει restart και ξαναφορτώνει. Χωρίς terminal.</li>
+      <li><b>What's changed</b> — popup με τις αλλαγές της έκδοσης.</li>
+    </ul>
+  </section>
+
+  <!-- ============ DATA ============ -->
+  <section id="data">
+    <h2><span class="n">6</span> Δεδομένα, backup &amp; ασφάλεια</h2>
+    <table>
+      <tr><th>Τι</th><th>Πού / Πώς</th></tr>
+      <tr><td>Όλα τα δεδομένα</td><td><code>~/.tokenanalytics/</code> (history.db + ρυθμίσεις). Διαγράφεται/μετακινείται ελεύθερα.</td></tr>
+      <tr><td>Μόνιμο ιστορικό</td><td>το <code>history.db</code> δεν διαγράφει ποτέ captured rollups → κρατάς όλο το ιστορικό, όχι μόνο 30 μέρες</td></tr>
+      <tr><td>Telemetry</td><td>καμία — η εφαρμογή δεν στέλνει analytics σε κανέναν server</td></tr>
+      <tr><td>Sync ασφάλεια</td><td>μόνο μέσα στις δικές σου συσκευές (LAN/Tailscale), token-protected, rollups-only</td></tr>
+    </table>
+    <div class="note warn"><b>Tip:</b> μην βάζεις τον φάκελο της εφαρμογής σε iCloud-synced Desktop/Documents — το iCloud μπορεί να «εκδιώξει» αρχεία σε cloud-only και να μπερδέψει git/venv. Προτίμησε π.χ. <code>~/Developer/</code>.</div>
+  </section>
+
+  <!-- ============ TROUBLE ============ -->
+  <section id="trouble">
+    <h2><span class="n">7</span> Επίλυση προβλημάτων</h2>
+    <div class="grid">
+      <div class="card"><b>«can't be opened» (Gatekeeper)</b><br><small>Δεξί κλικ → Open, ή System Settings → Privacy &amp; Security → Open Anyway. Είναι unsigned.</small></div>
+      <div class="card"><b>Το peer δεν συνδέεται</b><br><small>Ο hub πρέπει να είναι ανοιχτός &amp; προσβάσιμος (LAN IP ή Tailscale). Έλεγξε URL + token. Σε άλλο δίκτυο → Tailscale.</small></div>
+      <div class="card"><b>401 στο sync</b><br><small>Λάθος ή κενό token. Πάρε το σωστό από τον hub: Settings → Multi-device sync.</small></div>
+      <div class="card"><b>Πόρτα κατειλημμένη</b><br><small><code>node bin/cli.js --port 4000 --api-port 9000</code> για άλλες πόρτες.</small></div>
+      <div class="card"><b>Cursor δείχνει «estimated»</b><br><small>Σωστό — ο Cursor δεν εκθέτει tokens, οπότε εκτιμώνται από το κείμενο (τιμές Composer).</small></div>
+    </div>
+  </section>
+
+  <footer>
+    TokenAnalytics · 100% local · <a href="https://github.com/2netgr/tokenanalytics">github.com/2netgr/tokenanalytics</a>
+  </footer>
+
+</div>
+</body>
+</html>
