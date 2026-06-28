@@ -1,6 +1,21 @@
 {
   "releases": [
     {
+      "tag": "2026-06-28",
+      "title": "TokenAnalytics is now a real Mac app",
+      "highlights": [
+        {
+          "title": "Download, double-click, done",
+          "description": "There's now a proper macOS app you can download and install — no Terminal, no Python or Node to set up, nothing else required. It opens in its own clean window with its own Dock icon and runs fully offline.",
+          "href": "https://github.com/2netgr/tokenanalytics/releases/latest"
+        },
+        {
+          "title": "Never blocked by a busy port",
+          "description": "If port 3000 (or any other) is already in use, the app quietly picks a free one and just works — no error, no settings to change."
+        }
+      ]
+    },
+    {
       "tag": "2026-06-25",
       "title": "Cleaner sidebar — hide agents you don't use",
       "highlights": [

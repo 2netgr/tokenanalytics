@@ -71,3 +71,9 @@ simulate.py
 # Throwaway test venvs
 .ta-test-venv/
 **/.ta-test-venv/
+
+# Desktop app (macOS) build artifacts — fetched runtimes + built .app/.dmg.
+# Only the source (desktop/shell, desktop/build.sh, Info.plist.template, README)
+# is committed; `desktop/build.sh` reproduces runtime/ and dist/.
+desktop/runtime/
+desktop/dist/

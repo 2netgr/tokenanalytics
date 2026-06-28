@@ -202,20 +202,21 @@ async function isPortFree(port) {
   return !(v4 || v6);
 }
 
-async function ensurePortsFree(ports) {
-  const busy = [];
-  for (const p of ports) {
-    if (!(await isPortFree(p))) busy.push(p);
+async function findFreePort(preferred, avoid = []) {
+  // Return `preferred` if it's free; otherwise scan upward for the next free
+  // port (skipping anything already claimed in `avoid`). This lets the app
+  // start with zero user intervention even when the default port is taken —
+  // instead of erroring out, we just move to the next open slot. We resolve the
+  // ports ourselves (rather than letting Next silently bump to N+1) so the URL
+  // we print and auto-open always matches the port the server actually binds.
+  const MAX_TRIES = 200;
+  let port = preferred;
+  for (let i = 0; i < MAX_TRIES; i++, port++) {
+    if (port > 65535) port = 1024; // wrap back into the unprivileged range
+    if (avoid.includes(port)) continue;
+    if (await isPortFree(port)) return port;
   }
-  if (busy.length === 0) return;
-  console.error('\nERROR: required port(s) already in use: ' + busy.join(', '));
-  console.error('Stop whatever is listening on those ports and try again.');
-  if (process.platform !== 'win32') {
-    console.error('Tip: `lsof -iTCP:' + busy[0] + ' -sTCP:LISTEN` shows the culprit.');
-  } else {
-    console.error('Tip: `netstat -ano | findstr :' + busy[0] + '` shows the culprit PID.');
-  }
-  process.exit(1);
+  die(`could not find a free port near ${preferred} after ${MAX_TRIES} tries.`);
 }
 
 function openBrowser(url) {
@@ -390,7 +391,7 @@ function maybeMigrateDataDir(env) {
 }
 
 async function start() {
-  const { frontPort, apiPort, host, allowedOrigins, authToken, insecureNoAuth, dataDir } = parseArgs(process.argv.slice(2));
+  let { frontPort, apiPort, host, allowedOrigins, authToken, insecureNoAuth, dataDir } = parseArgs(process.argv.slice(2));
 
   // --data-dir is just a friendly front-end for TOKENANALYTICS_DATA_DIR, which
   // the Python backend reads (tt_paths.data_dir). An explicit flag wins over an
@@ -406,9 +407,16 @@ async function start() {
   ensureFrontend();
   maybeMigrateDataDir(backendEnv);
 
-  // Fail fast if either required port is taken — otherwise Next bumps to N+1
-  // and the auto-opened browser lands on the wrong URL.
-  await ensurePortsFree([frontPort, apiPort]);
+  // Pick real, free ports instead of failing when the defaults are taken. The
+  // user wants zero intervention: if 3000/8000 are busy we quietly move to the
+  // next open ports and print the URL we actually bound. (apiPort avoids
+  // colliding with the resolved frontPort.)
+  const wantedFront = frontPort, wantedApi = apiPort;
+  frontPort = await findFreePort(frontPort);
+  apiPort = await findFreePort(apiPort, [frontPort]);
+  if (frontPort !== wantedFront || apiPort !== wantedApi) {
+    console.log(`→ requested ports busy; using ${frontPort} (app) / ${apiPort} (api) instead`);
+  }
 
   // Loopback binds display as "localhost"; a specific interface IP shows as-is.
   const displayHost = (host === '0.0.0.0' || host === '127.0.0.1') ? 'localhost' : host;

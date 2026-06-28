@@ -7,10 +7,34 @@ import { useEffect, useState } from "react";
 // dashboard was actually loaded on (window.location) plus the API port — so a
 // single build works on localhost, a LAN IP, or a tailnet host without rebaking
 // the URL. Falls back to loopback during SSR, where window is unavailable.
+// The API port. `NEXT_PUBLIC_API_PORT` is inlined at BUILD time, which is wrong
+// for the packaged desktop app: it auto-picks a FREE backend port at launch, so
+// the port can't be known when the bundle is built. The native shell therefore
+// passes the live port in the open URL (`…/?apiport=<n>`); we read it here at
+// runtime and remember it for this session (it survives SPA navigations and a
+// hard reload). Everything else (dev, LAN, tailnet) has no `apiport` and falls
+// back to the build-time env, so this is purely additive.
+function resolveApiPort(): string {
+  if (typeof window !== "undefined") {
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get("apiport");
+      if (fromUrl) {
+        window.sessionStorage.setItem("tt-api-port", fromUrl);
+        return fromUrl;
+      }
+      const saved = window.sessionStorage.getItem("tt-api-port");
+      if (saved) return saved;
+    } catch {
+      /* storage/URL unavailable — fall through to the build-time default */
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_PORT || "8000";
+}
+
 export const API_BASE = (() => {
   const explicit = process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "");
   if (explicit) return explicit;
-  const port = process.env.NEXT_PUBLIC_API_PORT || "8000";
+  const port = resolveApiPort();
   if (typeof window !== "undefined") {
     return `${window.location.protocol}//${window.location.hostname}:${port}`;
   }
