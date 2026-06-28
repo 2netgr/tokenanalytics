@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# tokentelemetry — one-line installer.
+# TokenAnalytics — one-line installer.
 #   curl -fsSL https://raw.githubusercontent.com/2netgr/tokenanalytics/main/install.sh | bash
 set -euo pipefail
 
 REPO_URL="https://github.com/2netgr/tokenanalytics.git"
-TARGET_DIR="${TOKENTELEMETRY_DIR:-tokentelemetry}"
+TARGET_DIR="${TOKENANALYTICS_DIR:-${TOKENTELEMETRY_DIR:-tokenanalytics}}"
 
 need() { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: $1 is required but not installed."; exit 1; }; }
 

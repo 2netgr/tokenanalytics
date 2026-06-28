@@ -143,7 +143,7 @@ function printHelp() {
     '  -h, --help               Show this help.',
     '',
     'collector:',
-    '  tokentelemetry collector --hub-url <URL> --auth-token <T> [--interval <N>]',
+    '  tokenanalytics collector --hub-url <URL> --auth-token <T> [--interval <N>]',
     '                            Run this Mac as a collector: scan its local logs and',
     '                            sync summary rollups ONLY to a primary hub Mac.',
     '      --hub-url <URL>       Hub base URL, e.g. http://hub.tailnet.ts.net:8000.',
@@ -157,7 +157,7 @@ function printHelp() {
     '  start.sh --host 0.0.0.0 \\               # expose on a tailnet/LAN (token auto-gen)',
     '    --allowed-origins box.tailnet.ts.net,100.64.0.1',
     '  start.sh --data-dir /mnt/d/tt-data       # store config + state on D:',
-    '  tokentelemetry collector \\               # sync this Mac\'s rollups to a hub',
+    '  tokenanalytics collector \\               # sync this Mac\'s rollups to a hub',
     '    --hub-url http://hub.tailnet.ts.net:8000 --auth-token <T>',
   ].join('\n'));
 }

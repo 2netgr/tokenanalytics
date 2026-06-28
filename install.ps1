@@ -1,9 +1,9 @@
-# tokentelemetry — one-line installer (Windows PowerShell).
+# TokenAnalytics — one-line installer (Windows PowerShell).
 #   irm https://raw.githubusercontent.com/2netgr/tokenanalytics/main/install.ps1 | iex
 $ErrorActionPreference = "Stop"
 
 $RepoUrl   = "https://github.com/2netgr/tokenanalytics.git"
-$TargetDir = if ($env:TOKENTELEMETRY_DIR) { $env:TOKENTELEMETRY_DIR } else { "tokentelemetry" }
+$TargetDir = if ($env:TOKENANALYTICS_DIR) { $env:TOKENANALYTICS_DIR } elseif ($env:TOKENTELEMETRY_DIR) { $env:TOKENTELEMETRY_DIR } else { "tokenanalytics" }
 
 function Need($cmd) {
   if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
