@@ -30,7 +30,15 @@ let logURL = FileManager.default
 
 // PIDs of the child processes from the most recent run. Read at the next launch
 // to reap anything a non-graceful exit (Force Quit / crash) left orphaned.
-let pidFileURL = logURL.appendingPathComponent("running.pids")
+// Keyed by the bundle's location so two copies of the app (e.g. /Applications
+// and a mounted .dmg) never read — and reap — each other's children.
+let pidFileURL = logURL.appendingPathComponent("running-\(bundleKey(resourceURL.path)).pids")
+
+func bundleKey(_ path: String) -> String {
+    var h: UInt64 = 14695981039346656037
+    for b in path.utf8 { h = (h ^ UInt64(b)) &* 1099511628211 }
+    return String(h, radix: 16)
+}
 
 // MARK: - Helpers
 
@@ -303,12 +311,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     }
 
     func killStragglers() {
-        // 1) Reap the python backend by path: it runs out of our bundle's runtime
-        //    dir. Match the stable relative marker, not the absolute bundle path
-        //    (macOS reports /var/folders paths but Bundle resolves /private/var;
-        //    an absolute pattern would miss). Specific to our layout, so it can't
-        //    touch unrelated python/node.
-        runPkill("TokenAnalytics.app/Contents/Resources/runtime/")
+        // 1) Reap the python backend by path. Match the exact interpreter path THIS
+        //    bundle spawns with: a previous run of the same bundle used the same
+        //    string, so ps shows it verbatim. A generic "TokenAnalytics.app/…"
+        //    marker would also kill the backend of another copy of the app.
+        runPkill(pythonExec.path)
         // 2) The Next.js frontend renames its process to "next-server (vX)", so a
         //    path pattern can't find it. Use the PIDs recorded by the previous
         //    run, killing each only if it's still alive AND still looks like one
@@ -340,9 +347,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         p.waitUntilExit()
         let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
         return out.contains("next-server")
-            || out.contains("/runtime/python")
-            || out.contains("/runtime/node")
-            || out.contains("TokenAnalytics.app")
+            || out.contains(pythonExec.path)
+            || out.contains(nodeExec.path)
     }
 
     func writePidFile() {

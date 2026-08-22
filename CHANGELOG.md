@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.6.3] - 2026-08-22
+
+### Fixed
+- **Two copies of the Mac app no longer kill each other's backend.** On launch the app reaps children orphaned by a previous Force Quit; the match was by a generic `TokenAnalytics.app/…/runtime/` marker and a shared `running.pids` file, so a second copy (a mounted .dmg, an older build in /Applications) would stop the first one's backend. Now it matches only its own bundle's interpreter path and keeps a per-bundle pid file.
+
 ## [1.6.2] - 2026-08-22
 
 ### Changed

@@ -1,6 +1,6 @@
 {
   "name": "tokenanalytics",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Local token + cost monitoring dashboard for Claude, Codex, Gemini, and other coding agents.",
   "main": "index.js",
   "bin": {
