@@ -23,12 +23,8 @@ fully offline.
 ### [⬇︎ Download TokenAnalytics.dmg](https://github.com/2netgr/tokenanalytics/releases/latest/download/TokenAnalytics.dmg)
 
 1. Open the downloaded **TokenAnalytics.dmg** and drag **TokenAnalytics** into **Applications**.
-2. The first time you open it, macOS will say it can't verify the developer (the app is
-   free and not yet notarized by Apple). To open it that one time:
-   **right-click (Control-click) the app → Open → Open.**
-   *On macOS 15+ where that doesn't show an Open button: open it once, then go to*
-   **System Settings → Privacy & Security**, *scroll to "TokenAnalytics was blocked", and click* **Open Anyway**.
-3. That's it — every launch after the first is a normal double-click.
+2. Double-click to launch. The app is signed with an Apple Developer ID and notarized by
+   Apple, so macOS opens it without any security warning.
 
 > Apple Silicon (M1–M4). Prefer the command-line version, or on Intel/Linux/Windows? Use **Quick start** below.
 

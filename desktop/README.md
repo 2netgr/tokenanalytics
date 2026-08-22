@@ -47,10 +47,11 @@ access (the first build downloads the pinned CPython + Node into
 
 ### Notes
 
-- **Code signing is ad-hoc** (free). A downloaded copy therefore needs the
-  one-time "right-click → Open" / "Open Anyway" step (see the root README). To
-  ship with zero warnings, sign + notarize with an Apple Developer ID and staple
-  the ticket — then the same `build.sh` output opens cleanly.
+- **Default signing is ad-hoc** (dev builds). Releases use `build.sh --release`:
+  Developer ID Application identity, hardened runtime, secure timestamp on every
+  nested Mach-O (`desktop/entitlements/*.plist`), then `notarytool submit --wait`
+  and `stapler staple` on the .dmg. Needs the certificate in the keychain and a
+  notarytool keychain profile (`tokenanalytics-notary`, App Store Connect API key).
 - The build assembles and signs under `/private/tmp`, **never** in the repo: the
   repo lives on an iCloud-synced Desktop whose file-provider xattrs make
   `codesign` reject the bundle. Final artifacts are copied back to

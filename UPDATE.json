@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "tag": "2026-08-22",
+      "title": "Signed and notarized by Apple",
+      "highlights": [
+        {
+          "title": "Opens with a double-click, no warnings",
+          "description": "The Mac app is now signed with an Apple Developer ID and notarized, so macOS opens it straight away. No more right-click → Open or 'Open Anyway' on first launch.",
+          "href": "https://github.com/2netgr/tokenanalytics/releases/latest"
+        }
+      ]
+    },
+    {
       "tag": "2026-06-28",
       "title": "TokenAnalytics is now a real Mac app",
       "highlights": [

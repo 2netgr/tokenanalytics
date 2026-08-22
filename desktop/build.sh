@@ -5,7 +5,8 @@
 # native WKWebView shell. Produces desktop/dist/TokenAnalytics.app and, with
 # `--dmg`, desktop/dist/TokenAnalytics.dmg.
 #
-# Usage:  desktop/build.sh [--dmg] [--skip-frontend]
+# Usage:  desktop/build.sh [--dmg] [--skip-frontend] [--release]
+#   --release  Developer ID signing + notarization + stapling (implies --dmg)
 #
 set -euo pipefail
 
@@ -27,13 +28,35 @@ NODE_VER="v22.23.1"
 
 MAKE_DMG=0
 SKIP_FRONTEND=0
+RELEASE=0
 for arg in "$@"; do
   case "$arg" in
     --dmg) MAKE_DMG=1 ;;
     --skip-frontend) SKIP_FRONTEND=1 ;;
+    --release) RELEASE=1; MAKE_DMG=1 ;;
     *) echo "unknown arg: $arg"; exit 1 ;;
   esac
 done
+
+# Release signing. Developer ID Application identity + hardened runtime +
+# notarization + stapling, so a downloaded copy opens with no Gatekeeper
+# warning. Override with env: SIGN_IDENTITY, NOTARY_PROFILE.
+#   one-time setup:  xcrun notarytool store-credentials "$NOTARY_PROFILE" \
+#                      --apple-id <apple id> --team-id <team id>   (app-specific password)
+SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-tokenanalytics-notary}"
+if [ "$RELEASE" -eq 1 ]; then
+  if ! security find-identity -v -p codesigning | grep -q "$SIGN_IDENTITY"; then
+    echo "✗ no '$SIGN_IDENTITY' certificate in the keychain."
+    echo "  Create one: Xcode → Settings → Accounts → Manage Certificates → + → Developer ID Application"
+    exit 1
+  fi
+  if ! xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1; then
+    echo "✗ notarytool profile '$NOTARY_PROFILE' missing. Run once:"
+    echo "  xcrun notarytool store-credentials $NOTARY_PROFILE --apple-id <apple id> --team-id <team id>"
+    exit 1
+  fi
+fi
 
 VERSION="$(node -p "require('$ROOT/package.json').version" 2>/dev/null || echo '1.0.0')"
 echo "▸ Building $APP_NAME $VERSION"
@@ -131,23 +154,57 @@ echo "▸ Precompiling Python bytecode (hash-based)…"
   "$APP/Contents/Resources/app/backend" >/dev/null 2>&1 || true
 
 # ---------------------------------------------------------------------------
-# 4. Code signing (ad-hoc). Sign nested Mach-O binaries first, then seal the
-#    bundle, so every executable page is signed (required on Apple Silicon).
+# 4. Code signing. Default is ad-hoc (free). With --release: Developer ID +
+#    hardened runtime + secure timestamp. Every nested Mach-O (python dylibs /
+#    extension modules, the node binary, the python interpreter) is signed
+#    individually, inside-out, then the bundle is sealed — --deep is not
+#    reliable for nested runtimes and is deprecated.
 # ---------------------------------------------------------------------------
-echo "▸ Signing (ad-hoc)…"
+if [ "$RELEASE" -eq 1 ]; then
+  echo "▸ Signing (Developer ID, hardened runtime)…"
+  IDENT="$SIGN_IDENTITY"
+  SIGN_FLAGS=(--force --timestamp --options runtime)
+else
+  echo "▸ Signing (ad-hoc)…"
+  IDENT="-"
+  SIGN_FLAGS=(--force)
+fi
 # Best-effort: clear stray Finder info / resource forks. (com.apple.provenance
 # is sticky on recent macOS and can't be removed, but it doesn't block signing
 # an unsigned binary — which is why the Swift shell is built unsigned above.)
 xattr -cr "$APP" 2>/dev/null || true
-# One ad-hoc pass over the whole bundle: fresh-signs the (unsigned) Swift shell,
-# re-signs the bundled node + python dylibs, and writes the top-level
-# _CodeSignature seal. A valid seal means a downloaded copy reads as
-# "unidentified developer" (right-click → Open clears it) rather than "damaged".
-codesign --force --deep -s - "$APP"
-if codesign --verify --deep --strict "$APP" 2>/dev/null; then
+
+is_macho() { file -b "$1" 2>/dev/null | grep -q "Mach-O"; }
+RES="$APP/Contents/Resources"
+PYROOT="$RES/runtime/python"
+
+# 4a. Python runtime: every dylib / .so / executable, libraries first.
+while IFS= read -r -d '' f; do
+  is_macho "$f" || continue
+  codesign "${SIGN_FLAGS[@]}" -s "$IDENT" --entitlements "$HERE/entitlements/python.plist" "$f"
+done < <(find "$PYROOT" -type f \( -name '*.dylib' -o -name '*.so' \) -print0)
+while IFS= read -r -d '' f; do
+  is_macho "$f" || continue
+  codesign "${SIGN_FLAGS[@]}" -s "$IDENT" --entitlements "$HERE/entitlements/python.plist" "$f"
+done < <(find "$PYROOT/bin" -type f -perm -u+x -print0)
+
+# 4b. Node binary (V8 JIT entitlements).
+codesign "${SIGN_FLAGS[@]}" -s "$IDENT" --entitlements "$HERE/entitlements/node.plist" "$RES/runtime/node"
+
+# 4c. Native addons + their dylibs in the app bundle (e.g. sharp's libvips).
+while IFS= read -r -d '' f; do
+  is_macho "$f" || continue
+  codesign "${SIGN_FLAGS[@]}" -s "$IDENT" "$f"
+done < <(find "$RES/app" -type f \( -name '*.node' -o -name '*.dylib' -o -name '*.so' \) -print0)
+
+# 4d. Seal the bundle (signs the Swift shell + writes _CodeSignature).
+codesign "${SIGN_FLAGS[@]}" -s "$IDENT" --entitlements "$HERE/entitlements/shell.plist" "$APP"
+
+if codesign --verify --deep --strict --verbose=2 "$APP" 2>/dev/null; then
   echo "  ✓ signature verifies"
 else
   echo "  ⚠ signature verify reported issues (review before distributing)"
+  [ "$RELEASE" -eq 1 ] && exit 1
 fi
 
 SIZE="$(du -sh "$APP" | cut -f1)"
@@ -164,6 +221,20 @@ if [ "$MAKE_DMG" -eq 1 ]; then
   ln -s /Applications "$DMGSTAGE/Applications"
   TMP_DMG="$STAGE/$APP_NAME.dmg"; rm -f "$TMP_DMG"
   hdiutil create -volname "$APP_NAME" -srcfolder "$DMGSTAGE" -ov -format UDZO "$TMP_DMG" >/dev/null
+  if [ "$RELEASE" -eq 1 ]; then
+    # Sign the disk image itself, then notarize + staple it. The .app inside
+    # was already signed; stapling the .dmg also staples the app it carries
+    # (Apple records both), so Gatekeeper is happy online AND offline.
+    codesign --force --timestamp -s "$SIGN_IDENTITY" "$TMP_DMG"
+    echo "▸ Notarizing (this waits on Apple, typically 1–10 min)…"
+    xcrun notarytool submit "$TMP_DMG" --keychain-profile "$NOTARY_PROFILE" --wait
+    xcrun stapler staple "$TMP_DMG"
+    xcrun stapler validate "$TMP_DMG"
+    echo "▸ Gatekeeper assessment of the notarized app:"
+    MNT="$(mktemp -d)"; hdiutil attach "$TMP_DMG" -mountpoint "$MNT" -nobrowse -quiet
+    spctl -a -vv -t exec "$MNT/$APP_NAME.app" 2>&1 | sed 's/^/  /' || true
+    hdiutil detach "$MNT" -quiet
+  fi
   cp -f "$TMP_DMG" "$DIST/$APP_NAME.dmg"
   echo "✓ Built $DIST/$APP_NAME.dmg  ($(du -sh "$DIST/$APP_NAME.dmg" | cut -f1))"
 fi

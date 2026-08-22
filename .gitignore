@@ -77,3 +77,6 @@ simulate.py
 # is committed; `desktop/build.sh` reproduces runtime/ and dist/.
 desktop/runtime/
 desktop/dist/
+
+# --- Private cPanel sync hub (secrets, NEVER publish) ---
+sync-hub/

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.6.2] - 2026-08-22
+
+### Changed
+- **The macOS app is now signed with a Developer ID and notarized by Apple.** A downloaded `TokenAnalytics.dmg` opens with a plain double-click — no more "unidentified developer" / right-click → Open step. `desktop/build.sh --release` signs every bundled binary (CPython, Node, native addons) under the hardened runtime, notarizes the disk image and staples the ticket.
+
 ## [1.6.1] - 2026-06-25
 
 ### Changed
