@@ -1658,6 +1658,80 @@ def _release_id(releases: List[Dict[str, Any]], fallback: Optional[str]) -> Opti
     rid = "|".join(p for p in [top.get("tag"), top.get("title")] if p)
     return rid or fallback
 
+
+# --- Packaged (.dmg / .app / installer) update notice ----------------------
+# A bundled build is NOT a git checkout: _local_commit() is None, so the commit-
+# diff banner above can never fire and self-update-via-git-pull is impossible.
+# Instead the shell passes TT_APP_VERSION (the bundle's CFBundleShortVersionString)
+# and TT_PACKAGED=1; we compare that against the latest GitHub *release tag* and,
+# when behind, surface a "download the new version" banner that links to the
+# release page rather than pulling code. Cached separately from the SHA cache.
+_PACKAGED_CACHE = _TT_HOME / ".update-check-release.json"
+
+
+def _semver_tuple(v: Optional[str]) -> Optional[tuple]:
+    """Parse "1.6.3" / "v1.6.3" → (1, 6, 3). None if unparseable."""
+    if not isinstance(v, str):
+        return None
+    s = v.strip().lstrip("vV").split("-")[0].split("+")[0]
+    parts = s.split(".")
+    if not parts or not all(p.isdigit() for p in parts):
+        return None
+    return tuple(int(p) for p in parts)
+
+
+def _semver_behind(current: Optional[str], latest: Optional[str]) -> bool:
+    """True only when `latest` is a strictly higher semver than `current`."""
+    c, l = _semver_tuple(current), _semver_tuple(latest)
+    if c is None or l is None:
+        return False
+    # pad to equal length so (1,6) vs (1,6,1) compares correctly
+    n = max(len(c), len(l))
+    c += (0,) * (n - len(c))
+    l += (0,) * (n - len(l))
+    return l > c
+
+
+def _fetch_latest_release() -> Optional[Dict[str, Any]]:
+    """GitHub's latest published release: tag, page URL, and the direct asset
+    download when there's a single obvious installer. Cached for _UPDATE_CACHE_TTL.
+    Returns None on any network error (caller falls back to offline)."""
+    # cache read
+    try:
+        if _PACKAGED_CACHE.exists():
+            with open(_PACKAGED_CACHE, "r", encoding="utf-8") as f:
+                c = json.load(f)
+            age = _upd_time.time() - float(c.get("fetched_at", 0))
+            if 0 <= age <= _UPDATE_CACHE_TTL and c.get("tag"):
+                return c
+    except Exception:
+        pass
+    url = f"https://api.github.com/repos/{_REPO_OWNER}/{_REPO_NAME}/releases/latest"
+    try:
+        req = _urlreq.Request(url, headers={"User-Agent": "tokentelemetry-update-check"})
+        with _urlreq.urlopen(req, timeout=_UPDATE_FETCH_TIMEOUT) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        tag = data.get("tag_name")
+        if not tag:
+            return None
+        html_url = data.get("html_url") or f"https://github.com/{_REPO_OWNER}/{_REPO_NAME}/releases/latest"
+        # Prefer a direct asset download when the release ships exactly one.
+        assets = [a for a in (data.get("assets") or []) if a.get("browser_download_url")]
+        download = assets[0]["browser_download_url"] if len(assets) == 1 else html_url
+        out = {"tag": str(tag), "html_url": html_url, "download_url": download}
+        try:
+            _TT_HOME.mkdir(parents=True, exist_ok=True)
+            tmp = _PACKAGED_CACHE.with_suffix(".json.tmp")
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump({**out, "fetched_at": _upd_time.time()}, f)
+            os.replace(tmp, _PACKAGED_CACHE)
+        except Exception:
+            pass
+        return out
+    except Exception:
+        return None
+
+
 def _update_check_enabled() -> bool:
     """Whether the dashboard may contact GitHub for version/release info.
 
@@ -1687,10 +1761,42 @@ async def get_version():
         "release_url": f"https://github.com/{_REPO_OWNER}/{_REPO_NAME}",
         "source": "none",
         "repo": f"{_REPO_OWNER}/{_REPO_NAME}",
+        # Packaged builds (.dmg/.app/installer): download-a-new-version instead
+        # of git-pull. False + null for a git checkout (the default path below).
+        "packaged": False,
+        "download_url": None,
     }
     if not _update_check_enabled():
         base["source"] = "disabled"
         return base
+
+    # Packaged build: compare the bundle version to the latest GitHub release
+    # tag; a git checkout falls through to the commit-diff logic below.
+    app_version = os.environ.get("TT_APP_VERSION")
+    if os.environ.get("TT_PACKAGED") and app_version:
+        base["packaged"] = True
+        base["current"] = app_version
+        rel = _fetch_latest_release()
+        if rel is None:
+            base["source"] = "offline"
+            return base
+        base["latest"] = rel["tag"]
+        base["release_url"] = rel["html_url"]
+        base["download_url"] = rel["download_url"]
+        base["behind"] = _semver_behind(app_version, rel["tag"])
+        # Curated highlights (what's new) are best-effort — never block the notice.
+        try:
+            remote = _read_cache() or _fetch_remote()
+            if remote and remote.get("releases"):
+                base["releases"] = remote["releases"]
+        except Exception:
+            pass
+        # Dismissal key = the release tag, so the banner re-surfaces once per
+        # new version (not once per curated feature entry, as on the git path).
+        base["latest_release"] = rel["tag"]
+        base["source"] = "github"
+        return base
+
     if not current:
         # Not a git checkout — nothing to compare against.
         return base

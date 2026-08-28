@@ -2,6 +2,22 @@
   "releases": [
     {
       "tag": "2026-08-22",
+      "title": "Get told when a new version is out",
+      "highlights": [
+        {
+          "title": "In-app update notice",
+          "description": "When a newer version is released, the app now shows a slim banner with a one-click Download and a What's-changed list — no more manually checking GitHub.",
+          "href": null
+        },
+        {
+          "title": "Now on Windows and Linux too",
+          "description": "A self-contained Linux build (nothing to preinstall) and a portable Windows package join the macOS app, so the whole team can run TokenAnalytics whatever they're on.",
+          "href": null
+        }
+      ]
+    },
+    {
+      "tag": "2026-08-22",
       "title": "Signed and notarized by Apple",
       "highlights": [
         {

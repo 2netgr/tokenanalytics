@@ -13,6 +13,8 @@ interface Props {
   repo: string;
   currentSha: string | null;
   latestSha: string | null;
+  /** Bundled build: update by downloading, not `git pull`. */
+  packaged?: boolean;
 }
 
 /**
@@ -37,7 +39,7 @@ function safeHref(url: string | null | undefined): string {
  * in one panel without leaving the dashboard.
  */
 export default function WhatsChangedDrawer({
-  open, onClose, releases, releaseUrl, repo, currentSha, latestSha,
+  open, onClose, releases, releaseUrl, repo, currentSha, latestSha, packaged,
 }: Props) {
   // Esc-to-close + body-scroll-lock — standard drawer ergonomics.
   useEffect(() => {
@@ -82,7 +84,11 @@ export default function WhatsChangedDrawer({
               Update available
             </h2>
             <p className="text-[12px] text-[var(--tt-fg-muted)] mt-0.5">
-              Run <code className="font-mono text-[var(--tt-fg)]">git pull &amp;&amp; ./start.sh</code> to install everything below.
+              {packaged ? (
+                <>Download the new version to update — everything below is included.</>
+              ) : (
+                <>Run <code className="font-mono text-[var(--tt-fg)]">git pull &amp;&amp; ./start.sh</code> to install everything below.</>
+              )}
             </p>
           </div>
           <button
@@ -125,7 +131,7 @@ export default function WhatsChangedDrawer({
             target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-[var(--tt-fg-muted)] hover:text-[var(--tt-fg)] transition-colors"
           >
-            Commit history on GitHub <ExternalLink size={11} />
+            {packaged ? "Release notes on GitHub" : "Commit history on GitHub"} <ExternalLink size={11} />
           </a>
         </div>
       </aside>

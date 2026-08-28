@@ -33,6 +33,13 @@ export interface VersionInfo {
   release_url: string;
   source: "github" | "cache" | "offline" | "disabled" | "none";
   repo: string;
+  /**
+   * True for a bundled build (.dmg/.app/installer). These can't self-update via
+   * git-pull, so the banner links to the download instead of applying in place.
+   */
+  packaged: boolean;
+  /** Direct download for the newest release (packaged builds only). */
+  download_url: string | null;
 }
 
 export const getVersion = () => api<VersionInfo>("/version");

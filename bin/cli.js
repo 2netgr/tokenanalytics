@@ -224,7 +224,12 @@ function openBrowser(url) {
   if (process.env.AGENT_HARNESS_NO_OPEN) return;
   try {
     if (process.platform === 'darwin') spawn('open', [url], { detached: true, stdio: 'ignore' }).unref();
-    else if (isWindows) spawn('cmd', ['/c', 'start', '""', url], { detached: true, stdio: 'ignore' }).unref();
+    // `start` treats its first quoted token as the window title, so it needs an
+    // empty title arg or it swallows the URL as the title and opens nothing.
+    // Pass a real empty string (spawn emits a clean `""`); a literal '""' string
+    // gets backslash-escaped by Node's arg quoting into `"\"\""`, which corrupts
+    // the guard.
+    else if (isWindows) spawn('cmd', ['/c', 'start', '', url], { detached: true, stdio: 'ignore' }).unref();
     else spawn('xdg-open', [url], { detached: true, stdio: 'ignore' }).unref();
   } catch (_) { /* non-fatal */ }
 }
@@ -261,8 +266,12 @@ function checkNode() {
 }
 
 function findPython() {
-  // Try python3 first, fall back to python. Windows usually has just `python`.
-  for (const cmd of ['python3', 'python']) {
+  // Try python3, then python, then the Windows `py` launcher. `py` is often the
+  // ONLY entry on PATH when a user installs from python.org without ticking the
+  // (off-by-default) "Add python.exe to PATH" box — it lives in the system dir
+  // and always resolves. On macOS/Linux `which('py')` returns null, so it's a
+  // no-op there. The version guard below rejects a stray `py`→Python 2 alias.
+  for (const cmd of ['python3', 'python', 'py']) {
     const p = which(cmd);
     if (!p) continue;
     const probe = spawnSync(cmd, ['-c', 'import sys; print(sys.version_info[:2])'], { encoding: 'utf8' });

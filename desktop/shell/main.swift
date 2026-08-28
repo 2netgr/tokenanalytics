@@ -24,6 +24,10 @@ let nodeExec    = runtimeURL.appendingPathComponent("node")
 let backendDir  = appURL.appendingPathComponent("backend")
 let frontendDir = appURL.appendingPathComponent("frontend")
 
+// Bundle version (CFBundleShortVersionString), passed to the backend so its
+// update check compares THIS build against the latest GitHub release.
+let appVersion = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? ""
+
 let logURL = FileManager.default
     .homeDirectoryForCurrentUser
     .appendingPathComponent("Library/Logs/TokenAnalytics", isDirectory: true)
@@ -229,13 +233,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
                          // signed .app bundle — that write hangs under launchd (the OS
                          // synchronously inspects writes inside a launched bundle). The
                          // build precompiles hash-based caches, so startup stays fast.
-                         // TT_NO_UPDATE_CHECK: the .app ships as a .dmg and can't
-                         // self-update, so the "update available" banner would only
-                         // mislead — and turning it off makes the app fully offline
-                         // (this is the backend's only outbound network call).
+                         // TT_PACKAGED + TT_APP_VERSION: this is a bundled .app, not
+                         // a git checkout, so the backend compares our bundle version
+                         // against the latest GitHub release and shows a "download the
+                         // new version" banner (it can't git-pull in place). This is
+                         // the app's only outbound network call — a version check that
+                         // sends no logs, sessions, or usage data. Users can turn it
+                         // off in Settings → update check.
                          extraEnv: ["TT_API_PORT": "\(api)", "TT_HOST": "127.0.0.1",
                                     "PYTHONDONTWRITEBYTECODE": "1",
-                                    "TT_NO_UPDATE_CHECK": "1"],
+                                    "TT_PACKAGED": "1", "TT_APP_VERSION": appVersion],
                          logName: "backend.log")
 
         frontend = launch(nodeExec,

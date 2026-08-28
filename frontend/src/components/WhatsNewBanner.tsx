@@ -129,7 +129,11 @@ export default function WhatsNewBanner() {
               className="text-[var(--tt-brand)]"
               style={{ animation: "tt-update-spin 3s linear infinite" }}
             />
-            {updating ? "Updating TokenAnalytics…" : "Update available for TokenAnalytics"}
+            {updating
+              ? "Updating TokenAnalytics…"
+              : info.packaged && info.latest
+                ? `TokenAnalytics ${info.latest} is available`
+                : "Update available for TokenAnalytics"}
           </span>
 
           {state === "error" && error && (
@@ -142,17 +146,32 @@ export default function WhatsNewBanner() {
           <div className="flex-1 min-w-0" />
 
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={updateNow}
-              disabled={updating}
-              className="inline-flex items-center gap-1.5 rounded-md bg-[var(--tt-brand)] px-3 py-1.5 text-[11.5px] font-semibold text-white hover:bg-[var(--tt-brand-strong)] transition-colors disabled:opacity-60 disabled:cursor-default"
-            >
-              {updating
-                ? <RefreshCw size={12} className="animate-spin" />
-                : <Download size={12} />}
-              {updating ? "Updating…" : (state === "error" ? "Retry update" : "Update now")}
-            </button>
+            {info.packaged ? (
+              // Bundled build: can't git-pull in place — send the user to the
+              // download so they replace the app with the new version.
+              <a
+                href={info.download_url ?? info.release_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={dismiss}
+                className="inline-flex items-center gap-1.5 rounded-md bg-[var(--tt-brand)] px-3 py-1.5 text-[11.5px] font-semibold text-white hover:bg-[var(--tt-brand-strong)] transition-colors"
+              >
+                <Download size={12} />
+                Download update
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={updateNow}
+                disabled={updating}
+                className="inline-flex items-center gap-1.5 rounded-md bg-[var(--tt-brand)] px-3 py-1.5 text-[11.5px] font-semibold text-white hover:bg-[var(--tt-brand-strong)] transition-colors disabled:opacity-60 disabled:cursor-default"
+              >
+                {updating
+                  ? <RefreshCw size={12} className="animate-spin" />
+                  : <Download size={12} />}
+                {updating ? "Updating…" : (state === "error" ? "Retry update" : "Update now")}
+              </button>
+            )}
 
             <button
               type="button"
@@ -200,6 +219,7 @@ export default function WhatsNewBanner() {
         repo={info.repo}
         currentSha={info.current}
         latestSha={info.latest}
+        packaged={info.packaged}
       />
     </>
   );

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [1.6.4] - 2026-08-22
+
+### Added
+- **In-app "new version available" notice.** A packaged build now compares its own version against the latest GitHub release and shows a slim banner ("TokenAnalytics vX is available") with a **Download update** button and a **What's changed** drawer of the highlights. Bundled builds link to the download instead of `git pull` (which can't work inside a .app); git checkouts keep the existing one-click self-update. Controlled by `TT_PACKAGED` + `TT_APP_VERSION` from the shell; still off with `TT_NO_UPDATE_CHECK` or the Settings toggle.
+- **Linux distributable.** A self-contained `tokenanalytics-linux-x64.tar.gz` (bundled Node + CPython + prebuilt frontend) that runs on a clean glibc x86_64 box with nothing preinstalled. Reproducible recipe in `installer/linux/`.
+- **Windows portable package.** A `.zip` with a `start.bat` launcher and prerequisites README, plus two Windows-specific fixes in `bin/cli.js` (the `start` empty-title arg and the `py` launcher fallback for python discovery).
+
 ## [1.6.3] - 2026-08-22
 
 ### Fixed
